@@ -62,6 +62,7 @@ const GameCanvas: React.FC = () => {
       });
     }
     setLeaves(newLeaves);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathY]);
 
   // Update dimensions on resize
@@ -94,7 +95,7 @@ const GameCanvas: React.FC = () => {
       if (!audioContextRef.current) {
         audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
       }
-      const ctx = audioContextRef.current;
+      const ctx = audioContextRef.current!;
       const oscillator = ctx.createOscillator();
       const gainNode = ctx.createGain();
       
@@ -230,7 +231,9 @@ const GameCanvas: React.FC = () => {
 
       if (!activeLeaf) return null;
 
+      // leafScreenX is position inside container coordinates
       const leafScreenX = activeLeaf.worldX - cameraX;
+      const leafScreenY = activeLeaf.y;
 
       if (
         leafScreenX < -50 ||
@@ -240,7 +243,7 @@ const GameCanvas: React.FC = () => {
 
       const distance = Math.sqrt(
         Math.pow(screenX - leafScreenX, 2) +
-          Math.pow(screenY - activeLeaf.y, 2)
+          Math.pow(screenY - leafScreenY, 2)
       );
 
       return distance < hitRadius ? activeLeaf.id : null;
@@ -421,7 +424,8 @@ const GameCanvas: React.FC = () => {
     const screenX = leaf.worldX - cameraX;
     return screenX >= -60 && screenX <= dimensions.width + 60;
   });
-    // --- FIX DEFINITIVO: clamp de la tortuga en pantalla ---
+
+  // --- FIX DEFINITIVO: clamp de la tortuga en pantalla ---
   const TURTLE_WIDTH = 100;
 
   const turtleScreenX =
@@ -430,6 +434,7 @@ const GameCanvas: React.FC = () => {
   const clampedTurtleX = Math.min(
     Math.max(turtleScreenX, 0),
     dimensions.width - TURTLE_WIDTH
+  );
 
   return (
     <div
@@ -472,12 +477,12 @@ const GameCanvas: React.FC = () => {
       <Butterfly x={butterflyPos.x} y={butterflyPos.y} isFlying={isFlying} />
       
       {/* Turtle stays in fixed screen position while world moves */}
-    <Turtle 
-  x={clampedTurtleX}
-  y={pathY}
-  isWalking={isTurtleWalking} 
-  isHappy={gameWon}
-/>
+      <Turtle 
+        x={clampedTurtleX}
+        y={pathY}
+        isWalking={isTurtleWalking} 
+        isHappy={gameWon}
+      />
       
       <CelebrationOverlay isActive={gameWon} />
       
