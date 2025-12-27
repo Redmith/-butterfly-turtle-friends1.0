@@ -23,8 +23,11 @@ const GameCanvas: React.FC = () => {
   const exitTimerRef = useRef<number | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   
-  const [dimensions, setDimensions] = useState({ width: window.innerWidth, height: window.innerHeight });
-  const [butterflyPos, setButterflyPos] = useState({ x: 200, y: 200 });
+  const [dimensions, setDimensions] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 0,
+    height: typeof window !== 'undefined' ? window.innerHeight : 0
+  });
+  const [butterflyPos, setButterflyPos] = useState({ x: 200, y: 200 }); // local (container) coords
   const [isDragging, setIsDragging] = useState(false);
   const [isFlying, setIsFlying] = useState(false);
   const [isTurtleWalking, setIsTurtleWalking] = useState(false);
@@ -67,7 +70,11 @@ const GameCanvas: React.FC = () => {
       setDimensions({ width: window.innerWidth, height: window.innerHeight });
     };
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
   }, []);
 
   // Smooth camera animation
@@ -283,19 +290,29 @@ const GameCanvas: React.FC = () => {
     [isTurtleWalking, playWhooshSound, dimensions.width]
   );
 
+  // Convert client (viewport) coords to container-local coords
+  const clientToLocal = useCallback((clientX: number, clientY: number) => {
+    const rect = containerRef.current?.getBoundingClientRect();
+    const left = rect?.left ?? 0;
+    const top = rect?.top ?? 0;
+
+    return { x: clientX - left, y: clientY - top };
+  }, []);
+
   // Handle drag move
   const handleDragMove = useCallback((clientX: number, clientY: number) => {
     if (!isDragging || gameWon) return;
-    
-    setButterflyPos({ x: clientX, y: clientY });
+
+    const local = clientToLocal(clientX, clientY);
+    setButterflyPos({ x: local.x, y: local.y });
     setIsFlying(true);
     
-    // Check for leaf collision
-    const hitLeafId = checkLeafCollision(clientX, clientY);
+    // Check for leaf collision (local coordinates)
+    const hitLeafId = checkLeafCollision(local.x, local.y);
     if (hitLeafId !== null) {
       removeLeaf(hitLeafId);
     }
-  }, [isDragging, gameWon, checkLeafCollision, removeLeaf]);
+  }, [isDragging, gameWon, checkLeafCollision, removeLeaf, clientToLocal]);
 
   // Handle drag start
   const handleDragStart = useCallback((clientX: number, clientY: number) => {
@@ -311,11 +328,12 @@ const GameCanvas: React.FC = () => {
       return;
     }
     
+    const local = clientToLocal(clientX, clientY);
     setIsDragging(true);
-    setButterflyPos({ x: clientX, y: clientY });
+    setButterflyPos({ x: local.x, y: local.y });
     setIsFlying(true);
     playSound(600, 0.1, 'sine');
-  }, [gameWon, playSound]);
+  }, [gameWon, playSound, clientToLocal]);
 
   // Handle drag end
   const handleDragEnd = useCallback(() => {
@@ -328,9 +346,10 @@ const GameCanvas: React.FC = () => {
     if (e.touches.length > 1) return;
     
     const touch = e.touches[0];
-    
-    // Check for exit corner (top-left)
-    if (touch.clientX < 50 && touch.clientY < 50) {
+    const local = clientToLocal(touch.clientX, touch.clientY);
+
+    // Check for exit corner (top-left relative to container)
+    if (local.x < 50 && local.y < 50) {
       exitTimerRef.current = window.setTimeout(() => {
         window.close();
         window.location.href = 'about:blank';
@@ -347,7 +366,7 @@ const GameCanvas: React.FC = () => {
     }
     
     handleDragStart(touch.clientX, touch.clientY);
-  }, [handleDragStart]);
+  }, [handleDragStart, clientToLocal]);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (e.touches.length !== 1) return;
@@ -405,6 +424,7 @@ const GameCanvas: React.FC = () => {
 
   return (
     <div
+      id="game-container"
       ref={containerRef}
       className="fixed inset-0 overflow-hidden cursor-pointer"
       onTouchStart={handleTouchStart}
