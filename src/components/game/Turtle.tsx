@@ -1,103 +1,82 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
 interface TurtleProps {
   x: number;
   y: number;
   isWalking: boolean;
   isHappy: boolean;
-  // opcional: id del contenedor si querés pasar otro
-  containerId?: string;
 }
 
-const TURTLE_WIDTH = 100;
-
-const turtleScreenX =
-  TURTLE_SCREEN_X + (turtleWorldX - cameraX - 80);
-
-// 🔒 clamp para que nunca salga de pantalla
-const clampedTurtleX = Math.min(
-  Math.max(turtleScreenX, 0),
-  dimensions.width - TURTLE_WIDTH
-);
-;
-
-const Turtle: React.FC<TurtleProps> = ({ x, y, isWalking, isHappy, containerId = 'game-container' }) => {
-  const [containerRect, setContainerRect] = useState<{ left: number; top: number; width: number; height: number }>({
-    left: 0,
-    top: 0,
-    width: typeof window !== 'undefined' ? window.innerWidth : 0,
-    height: typeof window !== 'undefined' ? window.innerHeight : 0,
-  });
-
-  useEffect(() => {
-    const getRect = () => {
-      // preferimos visualViewport para móviles modernos
-      const vv = (window as any).visualViewport;
-      const container = document.getElementById(containerId) || document.getElementById('root') || document.body;
-      if (!container) return;
-
-      const rect = container.getBoundingClientRect();
-
-      // si visualViewport existe, usa su width/height (mejor en móviles)
-      const width = vv ? vv.width : rect.width || window.innerWidth;
-      const height = vv ? vv.height : rect.height || window.innerHeight;
-
-      // left/top del contenedor en relación al viewport (importante si el container no está en 0,0)
-      const left = rect.left;
-      const top = rect.top;
-
-      setContainerRect({ left, top, width, height });
-    };
-
-    // inicial
-    getRect();
-
-    // eventos a escuchar: resize, orientationchange y visualViewport resize
-    const onResize = () => getRect();
-    window.addEventListener('resize', onResize);
-    window.addEventListener('orientationchange', onResize);
-    const vv = (window as any).visualViewport;
-    if (vv && vv.addEventListener) vv.addEventListener('resize', onResize);
-
-    // cleanup
-    return () => {
-      window.removeEventListener('resize', onResize);
-      window.removeEventListener('orientationchange', onResize);
-      if (vv && vv.removeEventListener) vv.removeEventListener('resize', onResize);
-    };
-  }, [containerId]);
-
-  // calculamos left/top relativos al container y los clampeamos
-  const halfW = TURTLE_WIDTH / 2;
-  const halfH = TURTLE_HEIGHT / 2;
-
-  // desired posicion absoluta del sprite (coordenadas x,y que manejás)
-  // asumimos que x,y son relativos al mismo origen que usás para posicionar (si no, ajustar)
-const desiredLeft = x - halfW;
-const desiredTop = y - halfH;
-
-const minLeft = 0;
-const maxLeft = Math.max(0, containerRect.width - TURTLE_WIDTH);
-const clampedLeft = Math.min(Math.max(desiredLeft, minLeft), maxLeft);
-
-const minTop = 0;
-const maxTop = Math.max(0, containerRect.height - TURTLE_HEIGHT);
-const clampedTop = Math.min(Math.max(desiredTop, minTop), maxTop);
-
+const Turtle: React.FC<TurtleProps> = ({ x, y, isWalking, isHappy }) => {
   return (
     <div
-      className={`absolute pointer-events-none transition-all duration-200 ease-out ${isWalking ? 'animate-turtle-walk' : ''} ${isHappy ? 'animate-celebration' : ''}`}
+      className={`absolute pointer-events-none transition-all duration-1000 ease-out ${isWalking ? 'animate-turtle-walk' : ''} ${isHappy ? 'animate-celebration' : ''}`}
       style={{
-        left: clampedLeft,
-        top: clampedTop,
-        width: TURTLE_WIDTH,
-        height: TURTLE_HEIGHT,
+        left: x - 50,
+        top: y - 35,
+        width: 100,
+        height: 70,
         zIndex: 40,
       }}
     >
-      {/* SVG igual que antes */}
+      {/* Turtle SVG - facing RIGHT */}
       <svg viewBox="0 0 120 80" className="w-full h-full drop-shadow-lg">
-        {/* ... contenido ... */}
+        {/* Back legs (now on left side) */}
+        <ellipse cx="35" cy="60" rx="10" ry="12" className="fill-turtle-body" />
+        <ellipse cx="85" cy="60" rx="10" ry="12" className="fill-turtle-body" />
+        
+        {/* Front legs (now on right side) */}
+        <ellipse cx="95" cy="50" rx="12" ry="10" className="fill-turtle-body" />
+        <ellipse cx="25" cy="50" rx="12" ry="10" className="fill-turtle-body" />
+        
+        {/* Tail (now on left) */}
+        <ellipse cx="15" cy="45" rx="8" ry="5" className="fill-turtle-body" />
+        
+        {/* Shell base */}
+        <ellipse cx="60" cy="40" rx="40" ry="28" className="fill-turtle-shell" />
+        
+        {/* Shell pattern */}
+        <ellipse cx="60" cy="35" rx="25" ry="18" className="fill-primary opacity-40" />
+        <ellipse cx="45" cy="45" rx="10" ry="8" className="fill-grass-light opacity-30" />
+        <ellipse cx="75" cy="45" rx="10" ry="8" className="fill-grass-light opacity-30" />
+        <ellipse cx="60" cy="50" rx="8" ry="6" className="fill-grass-light opacity-30" />
+        
+        {/* Shell highlights */}
+        <ellipse cx="50" cy="28" rx="6" ry="4" className="fill-primary-foreground opacity-20" />
+        
+        {/* Head (now on right side) */}
+        <ellipse cx="105" cy="40" rx="15" ry="14" className="fill-turtle-body" />
+        
+        {/* Eyes (facing right) */}
+        <circle cx="110" cy="35" r="5" className="fill-background" />
+        <circle cx="112" cy="35" r="2.5" className="fill-foreground" />
+        
+        {/* Blush */}
+        <ellipse cx="112" cy="42" rx="4" ry="2" className="fill-accent opacity-40" />
+        
+        {/* Mouth - changes with happiness */}
+        {isHappy ? (
+          <>
+            <path
+              d="M105 46 Q110 54 115 46"
+              stroke="hsl(var(--foreground))"
+              strokeWidth="2"
+              fill="none"
+              strokeLinecap="round"
+            />
+            {/* Sparkles when happy */}
+            <circle cx="118" cy="30" r="2" className="fill-star animate-star-twinkle" />
+            <circle cx="100" cy="28" r="1.5" className="fill-star animate-star-twinkle" style={{ animationDelay: '0.3s' }} />
+          </>
+        ) : (
+          <path
+            d="M106 48 Q110 50 114 48"
+            stroke="hsl(var(--foreground))"
+            strokeWidth="2"
+            fill="none"
+            strokeLinecap="round"
+          />
+        )}
       </svg>
     </div>
   );
