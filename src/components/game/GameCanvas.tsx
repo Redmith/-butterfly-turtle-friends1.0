@@ -421,6 +421,15 @@ const GameCanvas: React.FC = () => {
     const screenX = leaf.worldX - cameraX;
     return screenX >= -60 && screenX <= dimensions.width + 60;
   });
+    // --- FIX DEFINITIVO: clamp de la tortuga en pantalla ---
+  const TURTLE_WIDTH = 100;
+
+  const turtleScreenX =
+    TURTLE_SCREEN_X + (turtleWorldX - cameraX - 80);
+
+  const clampedTurtleX = Math.min(
+    Math.max(turtleScreenX, 0),
+    dimensions.width - TURTLE_WIDTH
 
   return (
     <div
@@ -463,12 +472,12 @@ const GameCanvas: React.FC = () => {
       <Butterfly x={butterflyPos.x} y={butterflyPos.y} isFlying={isFlying} />
       
       {/* Turtle stays in fixed screen position while world moves */}
-      <Turtle 
-        x={TURTLE_SCREEN_X + (turtleWorldX - cameraX - 80)}
-        y={pathY}
-        isWalking={isTurtleWalking} 
-        isHappy={gameWon}
-      />
+    <Turtle 
+  x={clampedTurtleX}
+  y={pathY}
+  isWalking={isTurtleWalking} 
+  isHappy={gameWon}
+/>
       
       <CelebrationOverlay isActive={gameWon} />
       
