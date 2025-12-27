@@ -10,7 +10,16 @@ interface TurtleProps {
 }
 
 const TURTLE_WIDTH = 100;
-const TURTLE_HEIGHT = 70;
+
+const turtleScreenX =
+  TURTLE_SCREEN_X + (turtleWorldX - cameraX - 80);
+
+// 🔒 clamp para que nunca salga de pantalla
+const clampedTurtleX = Math.min(
+  Math.max(turtleScreenX, 0),
+  dimensions.width - TURTLE_WIDTH
+);
+;
 
 const Turtle: React.FC<TurtleProps> = ({ x, y, isWalking, isHappy, containerId = 'game-container' }) => {
   const [containerRect, setContainerRect] = useState<{ left: number; top: number; width: number; height: number }>({
