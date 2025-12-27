@@ -64,16 +64,16 @@ const Turtle: React.FC<TurtleProps> = ({ x, y, isWalking, isHappy, containerId =
 
   // desired posicion absoluta del sprite (coordenadas x,y que manejás)
   // asumimos que x,y son relativos al mismo origen que usás para posicionar (si no, ajustar)
-  const desiredLeft = x - halfW - containerRect.left;
-  const desiredTop = y - halfH - containerRect.top;
+const desiredLeft = x - halfW;
+const desiredTop = y - halfH;
 
-  const minLeft = 0;
-  const maxLeft = Math.max(0, containerRect.width - TURTLE_WIDTH);
-  const clampedLeft = Math.min(Math.max(desiredLeft, minLeft), maxLeft);
+const minLeft = 0;
+const maxLeft = Math.max(0, containerRect.width - TURTLE_WIDTH);
+const clampedLeft = Math.min(Math.max(desiredLeft, minLeft), maxLeft);
 
-  const minTop = 0;
-  const maxTop = Math.max(0, containerRect.height - TURTLE_HEIGHT);
-  const clampedTop = Math.min(Math.max(desiredTop, minTop), maxTop);
+const minTop = 0;
+const maxTop = Math.max(0, containerRect.height - TURTLE_HEIGHT);
+const clampedTop = Math.min(Math.max(desiredTop, minTop), maxTop);
 
   return (
     <div
